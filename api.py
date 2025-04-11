@@ -3,15 +3,23 @@ from pydantic import BaseModel
 from typing import List, Optional
 from movie_recommender import MovieRecommender
 import uvicorn
+import os
 
 app = FastAPI(
-    title="Movie Recommendation API",
-    description="API for recommending movies based on user input with enhanced features",
+    title="Movie Recommendation API (Extended Dataset)",
+    description="API for recommending movies based on user input with enhanced features using the extended dataset",
     version="1.0.0"
 )
 
+# Check if index exists
+index_dir = "index_data"
+if not os.path.exists(os.path.join(index_dir, "movie_index.faiss")):
+    raise RuntimeError(
+        "FAISS index not found. Please run build_index.py first to create the index."
+    )
+
 # Initialize the recommender
-recommender = MovieRecommender("movies_dataset_10k.csv")
+recommender = MovieRecommender("final_movies_dataset.csv", index_dir=index_dir)
 
 class MovieRecommendationRequest(BaseModel):
     movies: List[str]
@@ -26,9 +34,7 @@ class MovieRecommendation(BaseModel):
     popularity: float
     vote_average: float
     release_date: str
-    runtime: int
     genre_overlap: float
-    runtime_similarity: float
 
 class MovieRecommendationResponse(BaseModel):
     recommendations: List[MovieRecommendation]
@@ -36,7 +42,7 @@ class MovieRecommendationResponse(BaseModel):
 @app.get("/")
 async def root():
     return {
-        "message": "Welcome to Movie Recommendation API",
+        "message": "Welcome to Movie Recommendation API (Extended Dataset)",
         "endpoints": {
             "/recommend": "Get movie recommendations based on input movies",
             "/docs": "API documentation",
